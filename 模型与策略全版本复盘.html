@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Camp Energy 2026 — 模型与策略全版本复盘</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --card: #1a1d27;
+            --border: #2a2d3a;
+            --accent: #6c8aff;
+            --accent2: #ff6b8a;
+            --accent3: #4ecdc4;
+            --accent4: #ffd93d;
+            --text: #e4e6f0;
+            --text2: #9499b3;
+            --tag-lgb: #6c8aff;
+            --tag-xgb: #ff6b8a;
+            --tag-cat: #4ecdc4;
+            --tag-sklearn: #ffd93d;
+            --tag-ensemble: #c084fc;
+            --tag-classify: #f97316;
+            --tag-optuna: #22d3ee;
+            --tag-tool: #94a3b8;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 {
+            text-align: center;
+            font-size: 2.2em;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle { text-align: center; color: var(--text2); margin-bottom: 40px; font-size: 1.05em; }
+
+        /* 统计卡片 */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-card .num { font-size: 2.4em; font-weight: 800; }
+        .stat-card .label { color: var(--text2); font-size: 0.9em; margin-top: 4px; }
+        .stat-card:nth-child(1) .num { color: var(--accent); }
+        .stat-card:nth-child(2) .num { color: var(--accent2); }
+        .stat-card:nth-child(3) .num { color: var(--accent3); }
+        .stat-card:nth-child(4) .num { color: var(--accent4); }
+        .stat-card:nth-child(5) .num { color: #c084fc; }
+
+        /* 时代分隔 */
+        .era {
+            margin-bottom: 48px;
+        }
+        .era-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+        }
+        .era-icon { font-size: 1.8em; }
+        .era-title { font-size: 1.5em; font-weight: 700; }
+        .era-desc { color: var(--text2); font-size: 0.95em; margin-left: auto; }
+
+        /* 代码卡片 */
+        .code-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .code-card:hover { border-color: var(--accent); }
+        .card-header {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .file-name {
+            font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+            font-size: 1.05em;
+            font-weight: 600;
+            color: var(--accent);
+        }
+        .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 600;
+            color: #fff;
+        }
+        .tag-lgb { background: var(--tag-lgb); }
+        .tag-xgb { background: var(--tag-xgb); }
+        .tag-cat { background: var(--tag-cat); }
+        .tag-sklearn { background: var(--tag-sklearn); color: #333; }
+        .tag-ensemble { background: var(--tag-ensemble); }
+        .tag-classify { background: var(--tag-classify); }
+        .tag-optuna { background: var(--tag-optuna); color: #333; }
+        .tag-tool { background: var(--tag-tool); color: #333; }
+
+        .card-body { padding: 0 20px 16px; }
+        .card-body h4 {
+            color: var(--accent3);
+            font-size: 0.95em;
+            margin-bottom: 6px;
+            margin-top: 12px;
+        }
+        .card-body ul { padding-left: 18px; }
+        .card-body li { color: var(--text2); font-size: 0.9em; margin-bottom: 3px; }
+        .card-body li strong { color: var(--text); }
+
+        .highlight-box {
+            background: rgba(108,138,255,0.08);
+            border-left: 3px solid var(--accent);
+            padding: 10px 14px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9em;
+        }
+        .warn-box {
+            background: rgba(255,107,138,0.08);
+            border-left: 3px solid var(--accent2);
+            padding: 10px 14px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9em;
+        }
+
+        /* 时间线 */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+        .timeline .code-card {
+            position: relative;
+        }
+        .timeline .code-card::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 22px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 2px solid var(--bg);
+        }
+
+        /* 进化箭头 */
+        .evolution {
+            text-align: center;
+            margin: 24px 0;
+            font-size: 1.5em;
+            color: var(--accent);
+        }
+
+        /* 策略对比表 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.9em;
+        }
+        th {
+            background: var(--card);
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 2px solid var(--border);
+            color: var(--accent);
+            font-weight: 600;
+        }
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text2);
+        }
+        tr:hover td { color: var(--text); background: rgba(108,138,255,0.04); }
+
+        /* 页脚 */
+        .footer {
+            text-align: center;
+            color: var(--text2);
+            padding: 40px 0 20px;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<h1>⚡ AI Camp Energy 2026 — 模型与策略全版本复盘</h1>
+<p class="subtitle">蒙西电力市场储能优化竞赛 · 所有代码的预测模型、特征工程、充放电策略逐一梳理</p>
+
+<!-- ========== 统计概览 ========== -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="num">45+</div>
+        <div class="label">代码脚本总数</div>
+    </div>
+    <div class="stat-card">
+        <div class="num">6</div>
+        <div class="label">模型类型尝试</div>
+    </div>
+    <div class="stat-card">
+        <div class="num">5</div>
+        <div class="label">迭代阶段</div>
+    </div>
+    <div class="stat-card">
+        <div class="num">137</div>
+        <div class="label">最大特征数</div>
+    </div>
+    <div class="stat-card">
+        <div class="num">1</div>
+        <div class="label">策略方案（暴力枚举）</div>
+    </div>
+</div>
+
+<!-- ========== 第一阶段：基线探索 ========== -->
+<div class="era">
+    <div class="era-header">
+        <span class="era-icon">🌱</span>
+        <span class="era-title">第一阶段：基线探索</span>
+        <span class="era-desc">跑通流程，建立基准</span>
+    </div>
+    <div class="timeline">
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">sklearn_baseline.py</span>
+                <span class="tag tag-sklearn">sklearn GBDT</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: sklearn GradientBoostingRegressor (n_estimators=300, lr=0.05, max_depth=6)</li>
+                    <li><strong>特征</strong>: 7个预测值 + 4个基础时间特征 (hour/minute/dayofweek/month)</li>
+                    <li><strong>验证</strong>: 时间序 80/20 划分</li>
+                </ul>
+                <h4>🔋 充放电策略</h4>
+                <ul>
+                    <li><strong>暴力枚举</strong>: 遍历所有合法 (tc, td) 组合，选收益最大方案</li>
+                    <li>收益 < 0 则不操作（跳天）</li>
+                </ul>
+                <div class="highlight-box">⭐ 起点版本，策略框架沿用至今。验证了"暴力枚举是最优策略"这一结论。</div>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">advance_baseline.py</span>
+                <span class="tag tag-sklearn">sklearn GBDT</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: sklearn GBDT（同基线架构）</li>
+                    <li><strong>新增</strong>: NCMeteorologyProcessor 气象数据处理，修复 NaN 问题</li>
+                    <li><strong>改进</strong>: StandardScaler + ColumnTransformer Pipeline 化</li>
+                </ul>
+                <div class="warn-box">⚠️ 首次引入气象数据但处理粗糙，对空间维度直接求均值，丢掉地理信息。</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="evolution">⬇️</div>
+
+<!-- ========== 第二阶段：LightGBM + 特征工程 ========== -->
+<div class="era">
+    <div class="era-header">
+        <span class="era-icon">🚀</span>
+        <span class="era-title">第二阶段：LightGBM + 特征工程</span>
+        <span class="era-desc">从 sklearn 迁移到 LightGBM，大规模扩展特征</span>
+    </div>
+    <div class="timeline">
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">LGBM_baseline.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-tool">气象</span>
+                <span class="tag tag-ensemble">集成</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: LightGBM (num_leaves=31, max_depth=8, lr=0.02, n_estimators=300)</li>
+                    <li><strong>首次加入</strong>: DynamicNCProcessor 气象数据自动处理（1D~5D维度全覆盖）</li>
+                    <li><strong>异常值</strong>: IQR + Z-score 双重检测清洗</li>
+                    <li><strong>特征</strong>: 7预测值 + 时间/周期 + 气象 + <strong>滞后(lag1/2/4/8/12/24)</strong> + <strong>移动平均(ma4/8/16)</strong> + <strong>差分(diff1/4/8)</strong> + <strong>交互特征(两两乘积)</strong></li>
+                </ul>
+                <h4>🔋 策略</h4>
+                <ul><li>暴力枚举（同基线）</li></ul>
+                <div class="highlight-box">⭐ 里程碑：从 7+4=11 个特征跃升到上百个特征，LightGBM 替代 sklearn。</div>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">advance_basline2.py</span>
+                <span class="tag tag-sklearn">sklearn 多模型</span>
+                <span class="tag tag-ensemble">Voting</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: GBDT + RandomForest + HistGradientBoosting + Ridge 的 VotingRegressor 集成</li>
+                    <li><strong>特征</strong>: 在 LGBM_baseline 基础上增加多项式特征 (PolynomialFeatures)</li>
+                    <li><strong>气象</strong>: AdvancedNCProcessor，更精细处理</li>
+                </ul>
+                <div class="warn-box">⚠️ sklearn 集成效果不如 LightGBM 单模型，多项式特征引入噪声。</div>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">advance_baseline3.py</span>
+                <span class="tag tag-sklearn">sklearn 多模型</span>
+                <span class="tag tag-ensemble">Voting</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: 同 advance_basline2，增加异常值检测和清洗</li>
+                    <li><strong>改进</strong>: DynamicNCProcessor + 异常值 IQR/Z-score 双检清洗</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">advance_LGBM_baseline.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-tool">气象</span>
+                <span class="tag tag-ensemble">Voting</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: LightGBM + Ridge + RandomForest 的 VotingRegressor</li>
+                    <li><strong>策略</strong>: 增加<strong>稳健策略</strong>——预测收益低于阈值则放弃当天操作</li>
+                </ul>
+                <div class="highlight-box">首次尝试策略端改进（稳健阈值），但暴力枚举仍是核心。</div>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">advance_LGBM_baseline2.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-tool">气象</span>
+                <span class="tag tag-ensemble">Voting</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li>同 advance_LGBM_baseline，加强防过拟合策略</li>
+                    <li>调整 LightGBM 参数：reg_alpha/reg_lambda 更高</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">lgbm_baseline2.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: LightGBM (num_leaves=45, max_depth=8, lr=0.03)</li>
+                    <li><strong>关键改进</strong>: 引入<strong>净负荷</strong> (net_load = 系统负荷预测值 - 风光总加 - 水电) 和<strong>供需比</strong></li>
+                    <li><strong>数据拼接</strong>: 缓存训练集末尾192行拼接到测试集头部，解决滞后特征在测试集首行 NaN 的问题</li>
+                    <li><strong>异常值</strong>: IQR 2.5倍清洗（更温和）</li>
+                </ul>
+                <div class="highlight-box">⭐ 物理特征 + 防NaN拼接 = 两个核心改进点，后续版本全面继承。</div>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">lgbm_baseline3.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: LightGBM 两阶段训练法</li>
+                    <li><strong>阶段1</strong>: 快速训练全量特征，提取 Top-45 重要特征</li>
+                    <li><strong>阶段2</strong>: 仅用 Top-45 特征精细训练 (lr=0.02, 800轮早停30)</li>
+                </ul>
+                <div class="highlight-box">⭐ 首次特征筛选——"特征瘦身"。从几百个特征中筛选出黄金45个，减少噪声。</div>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">lgbm_baseline4.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li>同 lgbm_baseline3 两阶段架构，微调参数</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">lgbm_baseline5.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>核心</strong>: "回归5403分巅峰架构"</li>
+                    <li><strong>全量特征暴力组合</strong> + 历史数据无缝拼接 (防NaN)</li>
+                    <li><strong>极稳参数</strong>: num_leaves=31, lr=0.02, 800轮早停30</li>
+                </ul>
+                <div class="highlight-box">⭐ 以 5403 分为目标的"野性单模型"路线，全量特征不筛选。</div>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">advance_lgbm_2.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-tool">气象</span>
+                <span class="tag tag-ensemble">Voting</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: LightGBM + Ridge + RandomForest 集成</li>
+                    <li><strong>改进</strong>: 集成高分模型的优点</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="evolution">⬇️</div>
+
+<!-- ========== 第三阶段：多模型集成探索 ========== -->
+<div class="era">
+    <div class="era-header">
+        <span class="era-icon">🔥</span>
+        <span class="era-title">第三阶段：多模型集成探索</span>
+        <span class="era-desc">XGBoost / CatBoost / Stacking / Optuna 调参</span>
+    </div>
+    <div class="timeline">
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">xgboost_basline.py</span>
+                <span class="tag tag-xgb">XGBoost</span>
+                <span class="tag tag-tool">气象</span>
+                <span class="tag tag-ensemble">集成</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: XGBoost (替代 LightGBM)</li>
+                    <li><strong>特征</strong>: 同 LGBM_baseline 的全量特征工程</li>
+                    <li><strong>集成</strong>: XGBoost + Ridge + RandomForest 的 VotingRegressor</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">xgboost_Lgbm_baseline.py</span>
+                <span class="tag tag-xgb">XGBoost</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-ensemble">Voting</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: XGBoost + LightGBM 双模型 VotingRegressor 集成</li>
+                    <li><strong>首次尝试</strong>: GBDT 系双模型融合</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">advance_lgbm3（lg_xg_cat）.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-xgb">XGBoost</span>
+                <span class="tag tag-cat">CatBoost</span>
+                <span class="tag tag-ensemble">Voting</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: LightGBM + XGBoost + CatBoost 三大 GBDT VotingRegressor 集成</li>
+                    <li><strong>特征</strong>: 全量特征 + 物理特征 + 气象</li>
+                </ul>
+                <div class="highlight-box">⭐ 三大 GBDT 齐聚，简单加权平均融合。</div>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">cat_xgb_lgb.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-xgb">XGBoost</span>
+                <span class="tag tag-cat">CatBoost</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: CatBoost + XGBoost + LightGBM</li>
+                    <li><strong>新增</strong>: MeteorologicalProcessor 气象处理（scipy.interpolate 插值）</li>
+                    <li><strong>新增</strong>: permutation_importance 特征重要性评估</li>
+                    <li><strong>验证</strong>: 90/10 时序划分</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">cat_xgb)lgn2.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-xgb">XGBoost</span>
+                <span class="tag tag-cat">CatBoost</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>改进</strong>: 在 cat_xgb_lgb 基础上增加更多特征衍生</li>
+                    <li><strong>新增</strong>: 滚动统计、更丰富的跨特征交互</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">cat_xgb_trans.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-xgb">XGBoost</span>
+                <span class="tag tag-cat">CatBoost</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>改进</strong>: 在三模型基础上引入<strong>目标变换</strong> (target transformation)</li>
+                    <li>尝试对电价做非线性变换后再回归</li>
+                </ul>
+                <div class="highlight-box">⭐ 目标变换思路的雏形，后来在 V24 演变为 Arcsinh 变换。</div>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">multi_model.py</span>
+                <span class="tag tag-sklearn">sklearn 多模型</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-ensemble">集成</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: RF + GBDT + Ridge + ElasticNet + LightGBM 多模型集成</li>
+                    <li><strong>新增</strong>: TimeSeriesSplit 时序交叉验证</li>
+                    <li><strong>新增</strong>: 并行处理 (joblib Parallel)</li>
+                    <li><strong>特征</strong>: StandardScaler + RobustScaler 双缩放</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">lgb.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: LightGBM 优化版（处理负值、降低RMSE）</li>
+                    <li><strong>新增</strong>: RobustScaler（对异常值更鲁棒）</li>
+                    <li><strong>新增</strong>: 并行处理 + 多线程加速</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">lgb2.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: LightGBM 高精度版 (RMSE < 0.4 目标)</li>
+                    <li>在 lgb.py 基础上进一步调参</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">lgb3.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: LightGBM 稳定版（基于历史最佳配置）</li>
+                    <li>回归到验证过的最佳参数组合</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">Optunna_mc_lagbm.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-optuna">Optuna</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: LightGBM，超参数由 <strong>Optuna (TPE Sampler)</strong> 自动搜索</li>
+                    <li><strong>新增</strong>: 自动调参替代手动调参</li>
+                    <li><strong>新增</strong>: permutation_importance 评估 + scipy 插值</li>
+                </ul>
+                <div class="highlight-box">⭐ 首次自动化调参尝试。Optuna TPE 采样器搜索最优超参。</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="evolution">⬇️</div>
+
+<!-- ========== 第四阶段：高级集成与后处理 ========== -->
+<div class="era">
+    <div class="era-header">
+        <span class="era-icon">💎</span>
+        <span class="era-title">第四阶段：高级集成与后处理</span>
+        <span class="era-desc">Stacking / K-Fold / 价格锐化 / 动态 Alpha</span>
+    </div>
+    <div class="timeline">
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">multi_model1.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-ensemble">5-Fold</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>核心</strong>: "终极绝杀大招完全体"</li>
+                    <li><strong>全量特征</strong> + CDD/HDD 气象舒适度特征 + 历史无缝拼接</li>
+                    <li><strong>5-Fold 集成</strong>: KFold 5折训练，5个模型平均</li>
+                    <li><strong>策略</strong>: <strong>样本权重注入</strong>——对策略关键时段加权 + <strong>强力兜底策略</strong></li>
+                </ul>
+                <div class="highlight-box">⭐ 首次将策略收益反馈到模型训练中（样本权重），以及兜底策略概念。</div>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">multi_model2.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>核心</strong>: "5403分野性架构 + 价格锐化后处理"</li>
+                    <li>全量特征 + 历史拼接 + 极稳参数</li>
+                </ul>
+                <h4>🔋 后处理</h4>
+                <ul>
+                    <li><strong>价格锐化</strong>: 对预测电价做非线性变换，放大峰谷差</li>
+                </ul>
+                <div class="highlight-box">⭐ 首次引入"后处理"概念——不改模型，改预测结果来提升策略收益。</div>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">multi_model3.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>核心</strong>: "终极大决战完全体"</li>
+                    <li>野性单模型 + 气象舒适度特征</li>
+                </ul>
+                <h4>🔋 后处理</h4>
+                <ul>
+                    <li><strong>动态 Alpha 收益寻优引擎</strong>: 自动搜索最优锐化强度参数 α</li>
+                </ul>
+                <div class="highlight-box">⭐ 从手动锐化进化到自动寻优——α 参数自适应搜索。</div>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">advance_lgbm3（lg_xg_cat）1.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-xgb">XGBoost</span>
+                <span class="tag tag-cat">CatBoost</span>
+                <span class="tag tag-ensemble">Voting</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>核心</strong>: "高性能电力价格预测修正版"</li>
+                    <li>LightGBM + XGBoost + CatBoost 三模型</li>
+                    <li>并行处理 (joblib) + 多线程</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">multi_model2_temp.py</span>
+                <span class="tag tag-tool">纯策略</span>
+            </div>
+            <div class="card-body">
+                <h4>🔋 充放电策略</h4>
+                <ul>
+                    <li>独立策略脚本：读取已有电价预测 CSV，仅执行暴力枚举策略</li>
+                    <li>用于对比不同预测结果在相同策略下的收益差异</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="evolution">⬇️</div>
+
+<!-- ========== 第五阶段：版本化体系 (V17~V26) ========== -->
+<div class="era">
+    <div class="era-header">
+        <span class="era-icon">👑</span>
+        <span class="era-title">第五阶段：版本化体系 (V17 → V26)</span>
+        <span class="era-desc">规范化版本管理，关键突破集中在 V23~V26</span>
+    </div>
+    <div class="timeline">
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">v17.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>模型</strong>: LightGBM (MAE 目标优化)</li>
+                    <li><strong>特征</strong>: 全量 + MeteorologicalProcessor 气象 (scipy.interpolate 插值)</li>
+                    <li><strong>新增</strong>: permutation_importance 评估特征</li>
+                    <li><strong>对数变换</strong>: 对目标做 log 变换 + 逆变换</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">v18.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-xgb">XGBoost</span>
+                <span class="tag tag-cat">CatBoost</span>
+                <span class="tag tag-ensemble">Stacking</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>深度特征工程</strong>: 净负荷 + lag96/192/288/384/480(跨天同期) + 滚动分位数(q10/q50/q90) + 风速方向角 + ghi×光伏 + 峰谷平编码</li>
+                    <li><strong>三模型 Stacking</strong>: LGB(5种子) + XGB(5种子) + Cat(3种子) → Ridge 元学习器</li>
+                    <li><strong>对数变换</strong>: log + 逆变换</li>
+                </ul>
+                <div class="warn-box">⚠️ 问题：Ridge 元学习器权重异常 (LGB权重-0.225)，集成MAE反而 > 单模型最优。</div>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">v19.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-xgb">XGBoost</span>
+                <span class="tag tag-cat">CatBoost</span>
+                <span class="tag tag-ensemble">Stacking 修复</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>修复 Stacking</strong>: 改用 5-Fold OOF (Out-Of-Fold) 正确构建元学习器训练集</li>
+                    <li><strong>非负权重约束</strong>: scipy.optimize.minimize (SLSQP), sum(w)=1, w≥0</li>
+                    <li>CatBoost 种子数 3→5</li>
+                </ul>
+                <div class="highlight-box">⭐ 修复了 v18 集成退化问题，非负约束防止权重异常。CatBoost 为最优单模型(MAE 0.3166)。</div>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">V20.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>回归单模型</strong>: LightGBM，精简特征集 (FEATURE_SET_MINIMAL)</li>
+                    <li><strong>新增</strong>: TimeSeriesSplit 时序交叉验证</li>
+                    <li><strong>新增</strong>: 可视化 matplotlib (特征重要性、预测对比图)</li>
+                </ul>
+                <div class="highlight-box">⭐ 从复杂集成回归简洁单模型，开启"少即是多"路线。</div>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">V21.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li>LightGBM，正确评估指标：MAE + 充放电收益</li>
+                    <li>明确量化策略收益 = sum(放电价格)×1000 - sum(充电价格)×1000</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">V22.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li>LightGBM + DynamicNCProcessor 气象</li>
+                    <li>精简代码架构，去除冗余</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">V23.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-ensemble">3-Seed</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>核心纲领</strong>: "飞书V10历史最高分复刻版"</li>
+                    <li><strong>坚决摒弃</strong>: Lag滞后特征 + 气温(t2m/sp)特征（视为噪声）</li>
+                    <li><strong>Top 1 业务逻辑特征</strong>: <strong>热电竞价空间</strong> = 系统负荷 + 联络线 - 非市场化机组 - 风光总加</li>
+                    <li><strong>新能源占比</strong> = 风光总加 / 系统负荷</li>
+                    <li><strong>全量训练</strong>: 放弃验证集，8000轮训练</li>
+                    <li><strong>3-Seed 集成</strong>: seed=123/404/606，三模型平均</li>
+                </ul>
+                <h4>🔋 策略</h4>
+                <ul>
+                    <li><strong>每天必须操作</strong>，拒绝跳天（即使预测收益为负也操作）</li>
+                </ul>
+                <div class="highlight-box">⭐⭐⭐ 关键转折点！"做减法"——砍掉滞后和气象噪声特征，只保留纯净业务特征 + 热电竞价空间。全量训练 + 3-Seed = 历史最高分方案。</div>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">V24.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-tool">气象保底</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>核心</strong>: "终极决战版" — 5403分原生野性单模型</li>
+                    <li><strong>特征</strong>: 137全量特征 + 气象保底</li>
+                    <li><strong>新增</strong>: <strong>非线性极值锐化后处理</strong></li>
+                </ul>
+                <h4>🔋 后处理 — 极值锐化</h4>
+                <ul>
+                    <li>P80以上价格 × 1.3 (放大高电价)</li>
+                    <li>P20以下价格 绝对值减少30% (压缩低电价)</li>
+                </ul>
+                <div class="highlight-box">⭐ V24 在"做加法"路线（137特征+气象保底）上叠加极值锐化后处理，追求峰谷差最大化。</div>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">V24t.py</span>
+                <span class="tag tag-classify">分类模型</span>
+                <span class="tag tag-lgb">LightGBM</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>架构</strong>: "端到端动作分类" — <strong>直接预测最佳充放电动作概率</strong></li>
+                    <li><strong>思路</strong>: 跳过"先预测电价再优化策略"的两步法，直接用分类模型预测"充电/放电/观望"</li>
+                    <li><strong>标签</strong>: 上帝视角——根据真实电价反推每天完美操作，0=观望/1=充电/2=放电</li>
+                    <li><strong>特征</strong>: 极简白名单 + 热电竞价空间 + lag96 + diff1</li>
+                </ul>
+                <div class="warn-box">⚠️ 创新尝试但效果有限——分类模型无法精确捕捉电价连续值，策略收益不如回归+枚举。</div>
+            </div>
+        </div>
+
+        <div class="code-card">
+            <div class="card-header">
+                <span class="file-name">V25.py</span>
+                <span class="tag tag-lgb">LightGBM</span>
+                <span class="tag tag-tool">气象</span>
+            </div>
+            <div class="card-body">
+                <h4>🧠 预测模型</h4>
+                <ul>
+                    <li><strong>核心</strong>: Arcsinh 目标变换回归</li>
+                    <li><strong>特征</strong>: 7个预测值 + 热电竞价空间 + 新能源占比 + 高阶形态特征</li>
+                    <li><strong>新增</strong>: 日内Z-score、距最高点距离、爬坡率与加速度、前向4/8步MA、Lag96</li>
+                    <li><strong>Arcsinh变换</strong>: y' = arcsinh(y)，压缩极值尾部，逆变换 y = sinh(y')</li>
+                    <li><strong>参数</strong>: num_leaves=31, max_depth=6, lr=0.03, 800轮早停30</li>
+                </ul>
+                <h4>🔋 后处理 — 极值锐化</h4>
+                <ul>
+                    <li>P80以上 ×1.3，P20以下绝对值减30%</li>
+                </ul>
+                <h4>🔋 策略</h4>
+                <ul>
+                    <li>暴力枚举所有合法 (tc, td) 组合</li>
+                </ul>
+                <div class="highlight-box">⭐⭐ 当前最强版本 (V25/V26)。Arcsinh 变换比 log 更适合处理含负值的电价数据，极值锐化进一步提升策略收益。</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ========== 工具类脚本 ========== -->
+<div class="era">
+    <div class="era-header">
+        <span class="era-icon">🔧</span>
+        <span class="era-title">辅助工具脚本</span>
+        <span class="era-desc">数据读取、特征分析、输出对比</span>
+    </div>
+
+    <div class="code-card">
+        <div class="card-header">
+            <span class="file-name">readnc.py</span>
+            <span class="tag tag-tool">工具</span>
+        </div>
+        <div class="card-body">
+            <ul>
+                <li>NC文件读取器 — 工程化解耦设计</li>
+                <li>定义 NCDataReaderInterface 抽象基类，统一读取接口</li>
+                <li>支持多种维度结构的自动识别和降维</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="code-card">
+        <div class="card-header">
+            <span class="file-name">tezheng.py</span>
+            <span class="tag tag-tool">工具</span>
+        </div>
+        <div class="card-body">
+            <ul>
+                <li>量化级特征诊断流水线</li>
+                <li>特征重要性提取 + SHAP 值成因分析 + 相关性过滤</li>
+                <li>matplotlib 可视化 (特征重要性柱状图、相关性热力图)</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="code-card">
+        <div class="card-header">
+            <span class="file-name">V24t.py (tezheng版)</span>
+            <span class="tag tag-tool">工具</span>
+        </div>
+        <div class="card-body">
+            <ul>
+                <li>纯终端版特征诊断流水线 — Console-Only Feature Analysis</li>
+                <li>直接终端打印特征重要性和 SHAP 值排名，无需生成图片</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="code-card">
+        <div class="card-header">
+            <span class="file-name">output_analyse.py</span>
+            <span class="tag tag-tool">工具</span>
+        </div>
+        <div class="card-body">
+            <ul>
+                <li>输出对比分析工具</li>
+                <li>对比两个提交文件(如5403分 vs 新结果)的每日充放电时间差异</li>
+                <li>计算操作一致率，定位差异天</li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+
+<!-- ========== 核心策略对比总表 ========== -->
+<div class="era">
+    <div class="era-header">
+        <span class="era-icon">📊</span>
+        <span class="era-title">核心策略对比总表</span>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>版本</th>
+                <th>模型</th>
+                <th>特征策略</th>
+                <th>目标变换</th>
+                <th>后处理</th>
+                <th>充放电策略</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>sklearn_baseline</td>
+                <td>sklearn GBDT</td>
+                <td>7预测值 + 4时间</td>
+                <td>无</td>
+                <td>无</td>
+                <td>暴力枚举，收益<0跳天</td>
+            </tr>
+            <tr>
+                <td>LGBM_baseline</td>
+                <td>LightGBM</td>
+                <td>全量+滞后+MA+差分+交互+气象</td>
+                <td>无</td>
+                <td>无</td>
+                <td>暴力枚举</td>
+            </tr>
+            <tr>
+                <td>lgbm_baseline2</td>
+                <td>LightGBM</td>
+                <td>+净负荷+供需比+防NaN拼接</td>
+                <td>无</td>
+                <td>无</td>
+                <td>暴力枚举</td>
+            </tr>
+            <tr>
+                <td>lgbm_baseline3</td>
+                <td>LightGBM</td>
+                <td>两阶段筛选 Top-45</td>
+                <td>无</td>
+                <td>无</td>
+                <td>暴力枚举</td>
+            </tr>
+            <tr>
+                <td>lgbm_baseline5</td>
+                <td>LightGBM</td>
+                <td>全量特征暴力组合</td>
+                <td>无</td>
+                <td>无</td>
+                <td>暴力枚举</td>
+            </tr>
+            <tr>
+                <td>cat_xgb_trans</td>
+                <td>LGB+XGB+Cat</td>
+                <td>全量+目标变换尝试</td>
+                <td>变换雏形</td>
+                <td>无</td>
+                <td>暴力枚举</td>
+            </tr>
+            <tr>
+                <td>v17</td>
+                <td>LightGBM</td>
+                <td>全量+气象插值</td>
+                <td>log</td>
+                <td>无</td>
+                <td>暴力枚举</td>
+            </tr>
+            <tr>
+                <td>v18</td>
+                <td>LGB+XGB+Cat Stacking</td>
+                <td>+跨天lag+分位数+风速角+峰谷编码</td>
+                <td>log</td>
+                <td>无</td>
+                <td>暴力枚举</td>
+            </tr>
+            <tr>
+                <td>v19</td>
+                <td>LGB+XGB+Cat Stacking修复</td>
+                <td>同v18</td>
+                <td>log</td>
+                <td>无</td>
+                <td>暴力枚举</td>
+            </tr>
+            <tr>
+                <td>V23 ⭐</td>
+                <td>LightGBM 3-Seed</td>
+                <td>纯净7预测值+热电竞价空间+新能源占比（砍lag/气象）</td>
+                <td>无</td>
+                <td>无</td>
+                <td>暴力枚举，每天必操作</td>
+            </tr>
+            <tr>
+                <td>V24</td>
+                <td>LightGBM</td>
+                <td>137全量特征+气象保底</td>
+                <td>无</td>
+                <td>极值锐化(P80×1.3, P20减30%)</td>
+                <td>暴力枚举</td>
+            </tr>
+            <tr>
+                <td>V24t</td>
+                <td>LightGBM分类</td>
+                <td>极简+热电竞价空间</td>
+                <td>无(分类)</td>
+                <td>无</td>
+                <td>直接输出动作概率</td>
+            </tr>
+            <tr>
+                <td>V25/V26 ⭐⭐</td>
+                <td>LightGBM</td>
+                <td>7预测值+热电竞价空间+高阶形态(Z-score/爬坡率/前向MA/Lag96)</td>
+                <td>Arcsinh</td>
+                <td>极值锐化(P80×1.3, P20减30%)</td>
+                <td>暴力枚举</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ========== 关键发现 ========== -->
+<div class="era">
+    <div class="era-header">
+        <span class="era-icon">💡</span>
+        <span class="era-title">关键发现与经验总结</span>
+    </div>
+
+    <div class="code-card">
+        <div class="card-body">
+            <h4>🏆 模型方面</h4>
+            <ul>
+                <li><strong>单模型 > 多模型集成</strong>: LightGBM 单模型配合精心设计的特征，效果优于 Stacking/Voting 集成</li>
+                <li><strong>3-Seed 集成是最优集成策略</strong>: 简单平均3个不同种子的 LightGBM，比复杂 Stacking 更稳定</li>
+                <li><strong>Stacking 有陷阱</strong>: v18 Ridge元学习器权重异常，v19 非负约束修复但仍不如单模型</li>
+                <li><strong>Arcsinh > Log</strong>: 电价含负值，log需平移，arcsinh天然支持负值</li>
+                <li><strong>Optuna 自动调参</strong>: 有效但不如手动特征工程的收益大</li>
+            </ul>
+
+            <h4>🧩 特征方面</h4>
+            <ul>
+                <li><strong>热电竞价空间 = Top 1 特征</strong>: 系统负荷 + 联络线 - 非市场化机组 - 风光总加</li>
+                <li><strong>做减法有时更有效</strong>: V23 砍掉滞后和气象特征反而创历史最高分</li>
+                <li><strong>气象数据是双刃剑</strong>: 空间均值丢信息，处理不当引入噪声</li>
+                <li><strong>滞后特征需防NaN</strong>: 测试集首行 shift 产生 NaN，需拼接种子数据</li>
+                <li><strong>交互特征(两两乘积)</strong>: 维度爆炸但增益有限，需筛选</li>
+            </ul>
+
+            <h4>🔋 策略方面</h4>
+            <ul>
+                <li><strong>暴力枚举是最优搜索</strong>: 搜索空间仅 81×80=6480，穷举完全可行</li>
+                <li><strong>极值锐化有效</strong>: 放大峰谷差直接提升策略收益，P80×1.3 + P20减30% 是经验最优</li>
+                <li><strong>"每天必操作"有争议</strong>: V23 强制操作，其他版本允许跳天，需看具体数据</li>
+                <li><strong>分类模型(端到端)不如回归+枚举</strong>: 信息损失太大</li>
+            </ul>
+
+            <h4>🔮 未充分探索的方向</h4>
+            <ul>
+                <li>气象数据的空间维度信息（区域加权平均/PCA降维）</li>
+                <li>深度学习模型 (LSTM / Transformer) 对时序建模的优势</li>
+                <li>策略端置信度机制（预测不确定时降低操作力度）</li>
+                <li>滚动统计特征（过去N天同时刻均值/方差）</li>
+                <li>节假日/特殊日期特征</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    AI Camp Energy 2026 · 模型与策略全版本复盘 · 生成于 2026-05-13
+</div>
+
+</div>
+</body>
+</html>
